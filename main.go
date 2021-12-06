@@ -2,16 +2,22 @@ package main
 
 import (
 	//"fmt"
+	"log"
 	"net/http"
-  "log"
+  "os"
+
+	//dependancy to load .env files
+	"github.com/joho/godotenv"
 )
 
 
 func main() {
-  const PORT string = ":9090"
-  http.ListenAndServe(PORT, nil)
-  log.Println("listen on", PORT)
-  log.Fatal(http.ListenAndServe(PORT,nil))
+  err := godotenv.Load(".env")
+  if(err != nil){
+    log.Fatal("Error Loading .env File")
+  }
+  log.Println("listen on", os.Getenv("PORT"))
+  log.Fatal(http.ListenAndServe(os.Getenv("PORT"),nil))
   
 
 }
