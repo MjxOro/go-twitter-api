@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	//dependancy to load .env files
 	"github.com/joho/godotenv"
@@ -43,7 +44,11 @@ func main() {
   if(err != nil){
     log.Fatal("Error Loading .env File")
   }
-  var byte  = getApi(fmt.Sprintf("https://api.twitter.com/2/users/by/username/%s","5gMxTs"),os.Getenv("TWITTER_BEARER_TOKEN"))
+  var user string
+  fmt.Println("Enter Twitter username:")
+  fmt.Scanf("%s",&user)
+
+  var byte  = getApi(fmt.Sprintf("https://api.twitter.com/2/users/by/username/%s",user),os.Getenv("TWITTER_BEARER_TOKEN"))
   var userData ResponseData
   errUnmarshall := json.Unmarshal(byte, &userData)
   if(errUnmarshall != nil){
@@ -60,6 +65,8 @@ func main() {
   for _,v := range timelineData.Data{
     log.Printf("%s \n",string(v.Text))
   }
+
+  getNextTweet(userData.Data.ID,timelineData.Meta.NextToken)
 
    
 
@@ -95,3 +102,28 @@ func getApi( u string, token string)([]byte){
 
 
 }
+func getNextTweet(ID string,t string){
+    var input string
+    fmt.Println("Get next tweets? (next/exit):")
+    fmt.Scanf("%s",&input)
+    if(strings.ToLower(input) == "next" || strings.ToLower(input) == "exit"){
+      if(strings.ToLower(input) == "next"){
+        var nextPage TimeLineResponse
+        var nextPageByte = getApi(fmt.Sprintf("https://api.twitter.com/2/users/%s/tweets?pagination_token=%s",string(ID),string(t)),os.Getenv("TWITTER_BEARER_TOKEN"))
+        errNextPage := json.Unmarshal(nextPageByte,&nextPage)
+        if(errNextPage != nil){
+          log.Fatal(errNextPage)
+        }
+        for _,v := range nextPage.Data{
+          log.Printf("%s \n",string(v.Text))
+        }
+        getNextTweet(ID,nextPage.Meta.NextToken)
+
+      } 
+      if(strings.ToLower(input) == "exit"){
+        return 
+      }
+    } 
+
+}
+
